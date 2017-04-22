@@ -169,7 +169,11 @@ View(df_flights[1, ])
 # All of columns 1
 df_flights[, 1]
 df_flights[1:nrow(df_flights), 1]
+```
 
+How to start up Swirl for the homework assignment
+
+```{r}
 # How to open up swirl and do the homework assignment
 install.packages("swirl")
 library(swirl)
