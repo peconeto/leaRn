@@ -1,8 +1,3 @@
----
-title: "class_1"
-output: html_document
----
-
 # Intro
 
 - Welcome
