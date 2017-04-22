@@ -1,0 +1,193 @@
+---
+title: "class_1"
+output: html_document
+---
+
+# Intro
+
+- Welcome
+- Student/teacher introductions
+
+# What this course is and isn't
+
+- Not a computer science course
+- Not a statistics course
+- Will not go in-depth enough into any specific area
+- Will not cover every important topic required to become a good R programmer
+
+- Goal of this course is to teach the student enough to understand the framework for using R, and so that the student can then do self-research into any areas of interest
+- In other words, the class should teach you how to learn R on your own
+
+# Get on Slack!
+
+Slack is used for communications, homework assignments, posting of class notes, and as a discussion board for both students and teachers.
+
+# Why learn R (even if you already know Excel)?
+
+R allows you to perform data analysis with great speed and flexibility. It can do more challenging things than Excel, SPSS, and other analysis software. R scripts allow for reproducibility and critical review of analyses you've created. Finally, skills learned by learning to program in R can be used in other contexts that require human-machine interaction.
+
+Data analysts love to talk crap about Excel. R is more difficult and more complicated than Excel, but does that make it better?
+
+Advantages of R over Excel:
+- Ability to perform text analysis, simulation, machine learning, regressions with uncertainty, etc.
+- Can build Shiny or Plotly applications for more advanced products (3D, density, interactive)
+- Scripting for automation - just need to update dataset
+- Extensibility (ex. instead of hard-coding columns 1, 2, and 3 create a loop)
+- Can work with datasets that have > 100 columns, > 10,000 rows
+- Finally, to be respected as a data analyst (data scientist), statistical programming is required. R, Python, Julia, or equivalent all work well; similarly to how we’d scowl at “Excel database”, “Excel data analysis” is analogous to that
+
+Excel makes it easy to do simple tasks, but is very challenging for difficult tasks. In a lot of ways, R can be the complete opposite. Of course, the disadvantage of R is a steeper learning curve - especially getting started. Hopefully, this course can help.
+
+# R as a programming language
+
+R is a statistical programming language. It is a language (like English) which is used for communication. In this case, it's used for you to communicate with your computer and other data analysts on the subject of data analysis and statistics. It helps you be precise when you communicate, and it also allows you to de-code communications from a huge community of data analysts. At least for me, that has helped me learn.
+
+R is not software, it is a language. It is a tool, not a method of analysis. Anything that can also be done in R can be done by hand, but R gives you far more horsepower.
+
+# R Studio walkthrough
+
+R is a programming language. R Studio is an integrated development environment (IDE) used to help writing R easier.
+
+Key R Studio panes:
+- Console
+- Environment and history
+- Help, plots, and file explorer
+- Script editor and hotkeys to execute source code in console
+
+# R Bacis
+
+- Working directory
+- Environments: Global, function, package: Where R objects "live"
+- Objects: Vectors (even a number is a length 1 vector), data frames, matrices, lists, functions
+- Data types: num, char, logi, factor, NA, and variations thereof - such as int
+- Values and names are assigned to objects; capitalization is important!
+
+# Packages/libraries as an extension to base R
+
+Base R is incredibly powerful, but one of the best things about R is its community of data scientists and developers. Packages (aka libraries) can be downloaded for CRAN, GitHub, or other locations and used to extend R. Packages can contain new functions, datasets, etc. that are not available in base R. When downloaded from CRAN, they are peer reviewed and contain public documentation.
+
+Source code can be inspected for everything in R, including downloaded content such as packages.
+
+# Practical exercises
+
+Commenting
+
+```{r}
+1 + 1 # Add 1 and 1, should result in two - this is an example of a comment
+```
+
+Installing and loading packages
+
+```{r}
+# Install packages
+install.packages("tidyverse")
+install.packages("yarrr")
+install.packages("nycflights13")
+install.packages("swirl")
+
+# Load packages
+library(nycflights13)
+library(tidyverse)
+library(yarrr)
+library(swirl)
+```
+
+Creating some basic R objects, and referencing objects from the Global Environment
+
+```{r}
+# Creating vectors and objects
+1
+
+x <- 1
+x
+y # Object "y" not found
+
+z <- c(1, 2, 3) # Vector of lenght 3
+
+# This does the same as above, but it first creates three objects and then concatenates all into one
+a <- 1
+b <- 2
+c <- 3
+z_2 <- c(a, b, c)
+
+# This does the same as above, without havin to type everything in between the first and last values
+z_3 <- c(1:3)
+
+# If you invert the order of the numbers, it is the opposite
+z_4 <- c(3:1)
+
+# Creating some chr vectors
+first <- "Peco"
+last <- "Maranhao"
+full_name_concatenate <- c(first, last) # The c() function concatenates two L1 vectors into a L2 vector
+full_name <- paste(first, last) # The paste() function will combine two chr elements into one single element
+
+# Basic functions that collapse a vector into a single number
+mean(1)
+mean(c(1, 2, 3))
+mean(1:3)
+mean(z)
+
+# Tables or data.frames
+t <- cbind(1:3, 4:6)
+t2 <- rbind(c(1, 4), c(2, 5), c(3, 6))
+
+# Get help for a function
+?cbind
+
+# Create the same as above, but column 2 is a function of column 1
+t3 <- cbind(z, z + 3)
+
+# Creating x number of random variables
+?rnorm
+rnorm(1:10)
+```
+
+Working with some real data, learning basic data.frame exploration and subsetting
+
+```{r}
+# Working with some basic real data
+library(nycflights13)
+df_flights <- flights
+
+# Do the same thing as above without loading the library
+df_flights <- nycflights13::flights
+
+# Essential data viewing / exploration functions
+str(df_flights)
+summary(df_flights)
+head(df_flights)
+tail(df_flights)
+View(df_flights)
+
+# Basic subsetting
+mean(df_flights$air_time, na.rm = TRUE)
+y <- df_flights$air_time
+mean(y, na.rm = TRUE)
+
+# Row 1, column 1
+df_flights[1, 1]
+# All of row 1
+df_flights[1, ]
+df_flights[1, 1:ncol(df_flights)]
+View(df_flights[1, ])
+# All of columns 1
+df_flights[, 1]
+df_flights[1:nrow(df_flights), 1]
+
+# How to open up swirl and do the homework assignment
+install.packages("swirl")
+library(swirl)
+swirl() # Use the basics of programming in R course, lessons 1-4
+```
+
+# Homework
+
+For this class, complete the following homework assignments:
+
+- Review the [base R cheat sheet](https://www.rstudio.com/resources/cheatsheets/)
+- Complete Swirl R Programming Basic Building Blocks, lessons 1-4
+- Select a project that means something to you
+-- Must have a clearly defined question
+-- Must have data that answers that question
+-- Preferrably, the data needs some cleaning/wrangling so you can practice your skills
