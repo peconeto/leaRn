@@ -1,0 +1,138 @@
+# Recap of class 1
+
+- Recap of class 1 topics
+- Class 1 homework review
+
+# Functions
+
+Functions are the workhorses of programming languages. They take inputs, called arguments, and yield outputs after having performed some action on it.
+
+- Arguments
+- Order of arguments
+- Default arguments
+- Required arguments
+- Ellipsis
+
+# Operators
+
+Operators are used to evaluate a logical statement. Using an operator is similar to using a function, except that the syntax is different. Using an operator in R yields a logical vector of evaluations.
+
+- Equal to: ==
+- Not equal to: !=
+- Greater than, less than: >, <
+- Greater than or equal to, less than or equal to: =>, <=
+- And, or: &, |
+- In list: %in%
+- Opposite: !
+
+# Tidyverse
+
+Group of packages created and maintained by Hadley Wickam that provide an easy way to import (readr), wrangle (dplyr/tidyr), organize (tibble), and visualize (ggplot2) your data using the "grammar of data science." The packages work seamlessly together with each other and there is a vibrant community of contributors who keep updates coming frequently.
+
+In my opinion, it superior to base R and makes interacting with data using R far easier and more enjoyable. Everything that can be done in the tidyverse can be done in base R with analogous functions.
+
+# Practical exercises
+
+Load packages and doing essential data exploration
+
+```{r}
+library(tidyverse)
+library(yarrr)
+
+# Copy dataset to Global Environment
+df <- pirates
+
+# Basic exploration
+str(df)
+summary(df)
+
+# What do my columns mean?
+?pirates
+```
+
+Subsetting rows and columns (selecting and filtering)
+
+```{r}
+# Selecting columns and rows
+?select
+
+# Create an additional copy of the dataset so you don't have to constantly re-load it
+df2 <- df
+
+df2 <- select(df2, id, height, weight) # Select columns by name
+df2 <- select(df2, 1, 4, 5) # Select columns by index
+
+?filter
+
+df2 <- filter(df2, sex == "male") # Equal to
+df2 <- filter(df2, sex != "female") # Not equal to
+df2 <- filter(df2, sword.time < 5) # Less than
+
+# The unique or table functions are useful to determine whether to use ==, or !=, or %in%
+unique(select(df2, sex))
+table(select(df2, sex))
+```
+
+Combining select and filter
+
+```{r}
+# Filter by > 1 col
+df2 <- filter(df2, sex == "male", sword.time < 5)
+
+# Nested functions
+df2 <- select(filter(df2, sex == "female", eyepatch == 1), id, age, headband)
+```
+
+Creating calculated columns
+
+```{r}
+# Creating new columns
+?mutate
+
+df2 <- mutate(df2, height_in = height / 2.54)
+
+# Drop height column
+df2 <- select(df2, -height)
+```
+
+Pipes
+
+```{r}
+# This works, but is resource intensive and annoying to read/write
+# This is also difficult to alter (for example if I wanted to alter df2 to df)
+df2 <- mutate(df2, height_in = height / 2.54)
+df2 <- filter(df2, sex == "female", eyepatch == 1)
+df2 <- select(df2, id, age, headband)
+df2 <- mutate(df2, new_id = id * 10)
+df2 <- select(df2, -id)
+
+# This is impossible to read and troubleshoot
+df2 <- select(mutate(select(filter(mutate(df2,
+                                          height_in = height / 2.54),
+                                   sex == "female", eyepatch == 1), 
+                            id, age, headband),
+                     new_id = id * 10),
+              -id)
+
+# That is why we use the %>% (piping) operator
+df2 <- df2 %>%
+  mutate(height_in = height / 2.54) %>%
+  filter(sex == "female", eyepatch == 1) %>%
+  select(id, age, headband) %>%
+  mutate(new_id = id * 10) %>%
+  select(-id)
+```
+
+Loading data: We'll use CSV here as a very common file extension for data storage. JSON, XML, SQL, etc. can all be used with different R packages. RData is a good R-specific data storage extension for fast reading/writing, even in large files.
+
+```{r}
+x <- read_csv("leaRn/student_data.csv")
+```
+
+# Homework
+
+For this class, complete the following homework assignments:
+
+- Review the [data import and data transformation cheat sheets](https://www.rstudio.com/resources/cheatsheets/)
+- Complete Swirl R Programming Basic Building Blocks, lessons 5-9
+- Practice loading data from your selected data analysis and selecting/filtering/mutating on it with pipes
