@@ -16,3 +16,13 @@ Topics:
 - Packages
 - Essential data exploration functions
 - Simple subsetting
+
+# Class 2: Loading and Manipulating Data
+1. Recap of class 1
+2. Functions
+3. Operators
+4. Tidyverse
+5. Subsetting rows and columns
+6. Creating calculated columns
+7. Data pipes
+8. Loading data
