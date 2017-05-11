@@ -1,0 +1,113 @@
+# Recap of class 2
+
+- Recap of class 2 topics
+- Class 2 homework review
+
+# NA Values
+
+NA is a blank value used to represent an unknown value. This is superior to using "" or 0 because those can be mis-interpreted as values.
+
+# Why Explore, Visualize, and Clean Data
+
+Data exploration is incredibly useful to understand what variables (columns) are available, and what types of values exist. Exploration and visualization can help discover when bad data exists by looking for ourliers or trends that don't make sense. Since any analysis requires good and clean data, this is an absolute must for every data analysis a scientist conducts.
+
+It is easily overlooked and commonly cited as the worst or most time-consuming part of an analyst's job. R can greatly help increase accuracy and reduce work on this step. Skipping it altogether would be a huge mistake with regards to the validity of conclusions.
+
+Common functions:
+- str (or use RStudio GUI)
+- summary
+- head / View
+- unique / table
+
+Quick visualization:
+- qplot
+- ggplot
+
+# ggplot2
+
+The grammar of graphics. Uses a small number of common "verbs" and very standardized syntax to enable the programmer to describe any chart they can imagine.
+
+Note: I will not cover all details of ggplot2 because they are so specific to the graph you are trying to build. There is ample online documentation [here](http://ggplot2.tidyverse.org/reference/).
+
+Common geometric shapes:
+- geom_histogram
+- geom_density
+- geom_point
+- geom_bar
+- geom_line
+
+# Practical exercises
+
+Load required packages
+
+```{r}
+library(tidyverse)
+library(yarrr)
+
+# Copy dataset to Global Environment
+df <- pirateserrors
+```
+
+Start exploring variables and looking for outliers or errors
+
+```{r}
+# Review column values
+?pirateserrors
+str(df)
+summary(df)
+
+# Visualize
+ggplot(data = df, aes(x = sword.time)) + geom_histogram()
+ggplot(data = df, aes(x = beard.length)) + geom_histogram(binwidth = 30)
+ggplot(data = df, aes(x = beard.length)) + geom_histogram(binwidth = 1)
+ggplot(data = df, aes(x = sex)) + geom_histogram(stat = "count")
+
+# Find all values you do not want
+df %>%
+  filter(sex != "female") %>%
+  filter(sex != "male") %>%
+  filter(sex != "other") %>%
+  select(sex) %>%
+  unique()
+```
+
+Must understand creation of logical vectors to clean data more effectively; often times we know what "real" data looks like and want to replace all "bad" values
+
+```{r}
+# Demo creating opposite locical vector
+df$sex %in% c("male", "female", "other")
+!(df$sex %in% c("male", "female", "other"))
+
+# Start making mutations to data.frame
+df2 <- df
+
+# Replace values with NA
+df2 <- df2 %>%
+  mutate(sex = ifelse(sex %in% c("male", "female", "other"), sex, NA))
+
+df2 <- df2 %>%
+  mutate(sex = ifelse(!(sex %in% c("male", "female", "other")), NA, sex))
+``` 
+
+Complete cases can be used when NA values in columns invalidate entire measurement
+
+```{r}
+# Doing an analysis on gender, so only want valid records
+df2 <- complete.cases(df2)
+``` 
+
+ggpairs in the GGally library can be used to create a plot matrix and visualize many vairables and their relationships
+
+```{r}
+install.packages("GGally")
+library(GGally)
+ggpairs(yarrr::pirates)
+```
+
+# Homework
+
+For this class, complete the following homework assignments:
+
+- Review the [data visualization cheat sheet](https://www.rstudio.com/resources/cheatsheets/)
+- Complete the final Swirl R Programming Basic Building Blocks, lessons 10-12
+- Practice cleaning and visualizing data from your selected data analysis and getting it tidy for analysis
