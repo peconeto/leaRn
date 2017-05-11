@@ -26,3 +26,9 @@ Topics:
 6. Creating calculated columns
 7. Data pipes
 8. Loading data
+
+# Class 3: Exploring, Visualizing, and Cleaning Data
+1. Recap of class 2
+2. NA Values
+3. Why Explore, Visualize, and Clean
+4. ggplot2
