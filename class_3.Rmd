@@ -109,5 +109,5 @@ ggpairs(yarrr::pirates)
 For this class, complete the following homework assignments:
 
 - Review the [data visualization cheat sheet](https://www.rstudio.com/resources/cheatsheets/)
-- Complete the Swirl R Programming Basic Building Blocks, lessons 10-12
+- Complete the Swirl R Programming Basic Building Blocks lessons
 - Practice cleaning and visualizing data from your selected data analysis and getting it tidy for analysis
