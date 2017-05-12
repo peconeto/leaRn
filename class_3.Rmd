@@ -93,8 +93,16 @@ Complete cases can be used when NA values in columns invalidate entire measureme
 
 ```{r}
 # Doing an analysis on gender, so only want valid records
-df2 <- complete.cases(df2)
+df2 <- df2 %>%
+  filter(complete.cases())
 ``` 
+
+The caret::nzv function can be used to check for near-zero-variance variables
+
+```{r}
+library(caret)
+nzv(df2)
+```
 
 ggpairs in the GGally library can be used to create a plot matrix and visualize many vairables and their relationships
 
