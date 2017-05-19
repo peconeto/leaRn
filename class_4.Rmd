@@ -1,0 +1,118 @@
+# Recap of class 3
+
+- Recap of class 3 topics
+- Class 3 homework review
+
+At this point you should have enough knowledge to import, explore, visualize, and wrangle data in R! You should also have a good understanding of all the fundamentals you need to branch out and start learning how to do more specialized tasks on your own. Those are all the tough parts - from here on out, classes can focus on more practical applications of the tool.
+
+# Data Analysis Fundamentals
+
+- The most important part in answering a question is: Clearly defining the question!
+- Data comes second - identify and collect it
+- Data cleaning is commonly overlooked but absolutely critical for valid conclusions
+- Once you have a question and a relevant, clean dataset then run your analysis by creating models, testing hypotheses, building visualizations, etc.
+- If you come up with predictions, attempt to validate them
+- Finally, create your output and document your work - make it as reproducible as possible/practical
+
+# Practical exercises
+
+Note: From now on, it's assumed you understand how to install packages if you do not already have them installed. Also you should be able to find and review relevant documentation.
+
+In this practice exercise, will answer the questions or complete tasks posed below using datasets from the nycflights13 library:
+Q1: What was the fastest NYC flight in 2013?
+Q2: What airlines are most delayed on average?
+Q3: Create a chart that visually describes delays by airline
+Q4: Do delays correlate with greater speed in-flight?
+Q5: Does weather significantly affect flight delay severity?
+
+Load required packages
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+```
+
+Explore the data
+
+```{r}
+?flights
+df <- flights
+summary(df)
+str(df)
+```
+
+Q1: What was the fastest NYC flight in 2013?
+
+```{r}
+df %>%
+  mutate(speed = distance/air_time) %>%
+  filter(speed == max(speed, na.rm = TRUE)) %>%
+  View()
+```
+
+Q2: What airlines are most delayed on average?
+
+```{r}
+df %>%
+  mutate(total_delay = dep_delay + arr_delay) %>%
+  group_by(carrier) %>%
+  summarise(Average_Delay = mean(total_delay, na.rm = TRUE)) %>%
+  left_join(airlines) %>%
+  select(Airline = name,
+         Airline_Code = carrier,
+         Average_Delay) %>%
+  arrange(desc(Average_Delay))
+```
+
+Q3: Create a chart that visually describes delays by airline
+
+```{r}
+carrier_dep_delay <- df %>%
+  mutate(total_delay = dep_delay + arr_delay) %>%
+  filter(!is.na(total_delay))
+
+ggplot(data = carrier_dep_delay, aes(x = total_delay, fill = carrier)) + 
+  geom_density(alpha = .3)
+
+# For easier viewing, remove all departures >=100min
+ggplot(data = filter(carrier_dep_delay, total_delay < 100), aes(x = total_delay, fill = carrier)) + 
+  geom_density(alpha = .3)
+```
+
+Q4: Do delays correlate with greater speed in-flight?
+
+```{r}
+df <- df %>%
+  mutate(total_delay = dep_delay + arr_delay) %>%
+  mutate(speed = distance/air_time)
+
+cor_x <- df %>%
+  filter(!is.na(total_delay)) %>%
+  select(total_delay)
+
+cor_y <- df %>%
+  filter(!is.na(speed)) %>%
+  select(speed)
+
+# Do a correlation for the two variables
+cor(cor_x, cor_y)
+
+# Create a visualization
+ggplot(data = df, aes(x = speed, y = total_delay)) +
+  geom_point() +
+  geom_smooth()
+```
+
+Q5:Does weather significantly affect flight delay severity?
+
+```{r}
+# TBD
+```
+
+# Homework
+
+For this class, complete the following homework assignments:
+
+- Finish answering any open questions from this problem set; otherwise, ask more questions that could be answered with the nycflights13 dataset and practice answering them
+- Read Tidy Data and A Layered Grammar of Graphics, both by Hadley Wickham
+- Now that your data is imported and cleaned up, begin working on the script that will answer your research question; you should have everything you need to extract conclusions related to your project!
