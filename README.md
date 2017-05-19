@@ -29,6 +29,10 @@ Topics:
 
 # Class 3: Exploring, Visualizing, and Cleaning Data
 1. Recap of class 2
-2. NA Values
-3. Why Explore, Visualize, and Clean
+2. NA values
+3. Why explore, visualize, and clean data
 4. ggplot2
+
+# Class 4: Practice Data Analysis
+1. Recap of class 3
+2. Data analysis fundamentals
