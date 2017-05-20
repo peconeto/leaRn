@@ -75,8 +75,10 @@ ggplot(data = carrier_dep_delay, aes(x = total_delay, fill = carrier)) +
   geom_density(alpha = .3)
 
 # For easier viewing, remove all departures >=100min
-ggplot(data = filter(carrier_dep_delay, total_delay < 100), aes(x = total_delay, fill = carrier)) + 
-  geom_density(alpha = .3)
+carrier_dep_delay %>%
+  filter(total_delay < 100) %>%
+  ggplot(data = ., aes(x = total_delay, fill = carrier)) + 
+    geom_density(alpha = .3)
 ```
 
 Q4: Do delays correlate with greater speed in-flight?
