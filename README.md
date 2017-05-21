@@ -41,3 +41,7 @@ Topics:
 1. Analysis Reproducibility and Literate Programming Concepts
 2. R Markdown
 3. Machine Learning Demo: Predict yarrr::pirateserrors "tchests" variable for missing or incorrect entries
+
+# Class 6: Functions
+1. Why create functions?
+2. Function example: spcCharts
