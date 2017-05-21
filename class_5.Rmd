@@ -1,0 +1,55 @@
+Class 5: Literate Programming, Machine Learning Demo, and Another Practice Data Analysis
+
+# Recap of class 4
+
+- Recap of class 4 topics
+- Class 4 homework review
+
+# Analysis Reproducibility and Literate Programming Concepts
+
+The gold standard of analysis validation is *replication*. This is often not possible or practical due to time, cost, opportunity, ethical, data access, or other constraints. As such, we typicaly try to make analyses which can't be replicated *reproducible*, meaning another analyst or researcher can review and validate every step you took to come up with your conclusion. This is incredibly useful for documenting, sharing, and double-checking work.
+
+Literate programming is the concept of mixing a natural language (i.e. English) and a computer language (i.e. R) in order to explain analyses more easily. This is a great way to create reproducible data analyses, since you can have your entire code available with natural language instructions. The technique can also be used to create readable technical or non-technical documents that double up as reproducible data analyses. R Markdown is a R tool used to create documents with the concept of literate programming in mind.
+
+# R Markdown
+
+R Markdown is built-in with R Studio. It is similar to a R script, but you can specify where code chunks begin and end. You can also add images, hyperlinks, and other such objects to your document. A quick document with formatting guidelines can be found [here](http://rmarkdown.rstudio.com/authoring_basics.html).
+
+When creating your document, always keep in mind which code chunks should be executed, or even shown. One great feature of R Markdown is that the code needs to run in order to successfully print (knit), thus demanding a minimum level of quality.
+
+A good R Markdown document should:
+- Start with "raw data" - whatever this might mean in your context; importantly, it should not include data that was manipulated by hand without documentation
+- Try to do everything in code vs. point-and-click user interfaces; this forces you to document your work clearly because a computer can *only* do what you instruct it to
+- Use version control and commenting
+- Document your software and hardware environment, or default preferences, if being shared to a wide enough audience that this becomes relevant
+
+To know if you clearly documented your entire analysis and made it reproducible, ask yourself: How far back can a reader go until the analysis is no longer reproducible? The answer to this question should be all the way to extracting raw data from its repository.
+
+# Machine Learning Demo: Predict yarrr::pirateserrors "tchests" variable for missing or incorrect entries
+
+Note: Machine learning should be an entire class on its own. This demo is intended to show the power of R with a simulated real-world scenario while students are becoming comfortable with the language. This demo does not include enough information for a student to pick up on machine learning skills on its own. The demo is placed in this class because it's a shorter one.
+
+Load required packages
+
+```{r}
+library(tidyverse)
+library(yarrr)
+library(caret)
+```
+
+# Homework
+
+For this class, complete the following homework assignments:
+
+- Review the [R Markdown cheat sheet](https://www.rstudio.com/resources/cheatsheets/)
+- Put your capstone analysis in a R Markdown document that uses literate programming to explain the steps you took in your analysis, and your final conclusions
+- Practice your analysis skills by answering the following questions using nycflights13 datasets, and document your work using R Markdown:
+1) Which NYC airport has the most pronounced seasonal change in flights?
+2) What are daily peak times for NYC area airports?
+3) Do daily peaks shift over the course of the year or do they remain at the same times?
+4) What tail number had the most unique flights in the dataset?
+5) What aircraft manufacturer had the most unique flights in the dataset?
+6) What is the distibution of flights by aircraft manufacturer?
+7) How do aircraft manufacturer cruise speed claims compare to actual airspeeds in flight?
+8) Does the duration of cruise have an effect on the relationship above?
+9) Is there a relationship between aircraft manufacture date and airspeed?
