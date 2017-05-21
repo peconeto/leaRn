@@ -36,3 +36,8 @@ Topics:
 # Class 4: Practice Data Analysis
 1. Recap of class 3
 2. Data analysis fundamentals
+
+# Class 5: Literate Programming, Machine Learning Demo, and Another Practice Data Analysis
+1. Analysis Reproducibility and Literate Programming Concepts
+2. R Markdown
+3. Machine Learning Demo: Predict yarrr::pirateserrors "tchests" variable for missing or incorrect entries
