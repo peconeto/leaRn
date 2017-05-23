@@ -39,7 +39,7 @@ library(caret)
 
 For this class, complete the following homework assignments:
 
-- Review the [R Markdown cheat sheet](https://www.rstudio.com/resources/cheatsheets/)
+- Review the [R Markdown cheat sheet](https://www.rstudio.com/resources/cheatsheets/) and [R Markdown Reference Guide](https://www.rstudio.com/resources/cheatsheets/)
 - Put your capstone analysis in a R Markdown document that uses literate programming to explain the steps you took in your analysis, and your final conclusions
 - Practice your analysis skills by answering the following questions using nycflights13 datasets, and document your work using R Markdown:
 1) Which NYC airport has the most pronounced seasonal change in flights?
