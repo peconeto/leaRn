@@ -152,7 +152,7 @@ model_rf <- train(price ~ .,
                   trControl = trainControl(method = "cv", number = 10),
                   preProc = c("center", "scale"))
 
-# Train models: Linear model
+# Train models: Generalized linear model
 model_glm <- train(price ~ .,
                   data = df_training,
                   method = "glm",
