@@ -360,11 +360,13 @@ df_validation <- df_validation %>%
 # Final account
 df_validation %>%
   select(jbb_diff) %>%
-  sum()
+  drop_na() %>%
+  sum() # Could also use mean()
 
 df_validation %>%
   select(prediction_diff) %>%
-  sum()
+  drop_na() %>%
+  sum() # Could also use mean()
 
 # Cleanup environment
 rm(multiplot, pred_validation)
