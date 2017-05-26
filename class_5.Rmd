@@ -33,7 +33,7 @@ Will use the following libraries:
 - **tidyverse** for data manipulation
 - **caret** for machine learning
 - **yarrr** for datasets
-**GGally** for a plot matrix
+- **GGally** for a plot matrix
 
 Note: Help with the caret package can be found [here](http://topepo.github.io/caret/pre-processing.html).
 
