@@ -23,17 +23,444 @@ A good R Markdown document should:
 
 To know if you clearly documented your entire analysis and made it reproducible, ask yourself: How far back can a reader go until the analysis is no longer reproducible? The answer to this question should be all the way to extracting raw data from its repository.
 
-# Machine Learning Demo: Predict yarrr::pirateserrors "tchests" variable for missing or incorrect entries
+# Machine Learning Demo
 
 Note: Machine learning should be an entire class on its own. This demo is intended to show the power of R with a simulated real-world scenario while students are becoming comfortable with the language. This demo does not include enough information for a student to pick up on machine learning skills on its own. The demo is placed in this class because it's a shorter one.
 
-Load required packages
+## Predict Ship Acution Prices
+
+Will use the following libraries:
+- **tidyverse** for data manipulation
+- **caret** for machine learning
+- **yarrr** for datasets
+**GGally** for a plot matrix
+
+Note: Help with the caret package can be found [here](http://topepo.github.io/caret/pre-processing.html).
 
 ```{r}
+# Load required libraries
 library(tidyverse)
 library(yarrr)
 library(caret)
+library(GGally)
+
+# Set seed for reproducibility
+set.seed(78345)
 ```
+
+Explore and clean data to be predicted: The yarrr::auction data.frame.
+
+```{r}
+# Copy data.frame go Global.Env(), create an index, and make condition/color/style variables into factors
+df <- auction %>%
+  mutate(condition = as.factor(condition)) %>%
+  mutate(color = as.factor(color)) %>%
+  mutate(style = as.factor(style))
+
+# Explore data and visualize
+str(df)
+
+summary(df)
+
+df %>%
+  ggpairs()
+```
+
+First, we'll assess the performance of Jack's Blue Book (JBB) as a predictor.
+
+```{r}
+ggplot(data = df, aes(x = jbb, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "gam") + 
+  ggtitle("Jack's Blue Book Predictions vs. Actual Prices") +
+  annotate("text", x = 2500, y = 4500, label = paste("Pearson's R = ", round(
+    cor(
+      select(df, jbb),
+      select(df, price)
+      ),
+    2)
+    )
+  )
+```
+
+Seems like it is a good predictor, with correlation to actual prices of approximately 0.87. We'll aim on creating a model which competes with this predictor. First, we'll create a validation dataset so that we can compare final performanceagainst JBB.
+
+```{r}
+# Create test and training partitions
+index_test <- df %>%
+  select(price) %>%
+  unlist() %>%
+  createDataPartition(p = .35, list = FALSE)
+
+df_test <- df %>%
+  slice(index_test)
+
+df_training <- df %>%
+  slice(-index_test)
+
+# Create validation partition from test
+index_validation <- df_test %>%
+  select(price) %>%
+  unlist() %>%
+  createDataPartition(p = .05, list = FALSE)
+
+df_validation <- df_test %>%
+  slice(index_validation)
+
+df_test <- df_test %>%
+  slice(-index_validation)
+
+# Cleanup environment
+rm(df, index_test, index_validation)
+```
+
+Check for columns in the training set that should not be used.
+
+```{r}
+# Check for near zero variance variables
+df_training %>%
+  select(-jbb) %>%
+  nzv() # None
+
+# Check for highly correlated variables
+corr_matrix <- df_training %>%
+  select(-color, -style, -condition, -jbb) %>%
+  cor()
+
+findCorrelation(corr_matrix) # None
+
+# Check for linear dependencies
+df_training %>%
+  select(-style, -color, -condition, -jbb) %>%
+  findLinearCombos() # None
+
+# Remove jbb variable from training data prior to training models
+df_training <- df_training %>%
+  select(-jbb)
+
+# Clean environment
+rm(corr_matrix)
+```
+
+Train models. We will use 10 k-fold cross validation to estimate in-sample performance and pre-process the data during training so that it is centered and scaled.
+
+```{r}
+# Train models: Random forest
+model_rf <- train(price ~ .,
+                  data = df_training,
+                  method = "rf",
+                  trControl = trainControl(method = "cv", number = 10),
+                  preProc = c("center", "scale"))
+
+# Train models: Linear model
+model_glm <- train(price ~ .,
+                  data = df_training,
+                  method = "glm",
+                  trControl = trainControl(method = "cv", number = 10),
+                  preProc = c("center", "scale"))
+
+# Train models: K nearest neighbors
+model_knn <- train(price ~ .,
+                  data = df_training,
+                  method = "knn",
+                  trControl = trainControl(method = "cv", number = 10),
+                  preProc = c("center", "scale"))
+
+# Train models: Partial least squares
+model_pls <- train(price ~ .,
+                  data = df_training,
+                  method = "pls",
+                  trControl = trainControl(method = "cv", number = 10),
+                  preProc = c("center", "scale"))
+```
+
+Now we review our models and evaluate in-sample performance.
+
+```{r}
+model_rf
+model_glm
+model_knn
+model_pls
+```
+
+For in-sample performance, the generalized linear model has the lowest root mean sauqred error (RMSE). This means it is the best predicting model based on in-sample performance. We can also, plot residuals for this model to check if there is any pattern left to be discovered.
+
+```{r}
+# Residual plot
+ggplot(mapping = aes(x = 1:length(resid(model_glm)), y = resid(model_glm), geom = "point")) +
+  geom_point() +
+  geom_smooth(method = "gam") + 
+  ggtitle("Residual Plot for Generalized Linear Model")
+```
+
+We can now evaluate out-of-sapmle performance to see if the random forest model continues to be superior. The first code chunk below simply creates a function which is later used to display ggplots in panes.
+
+```{r}
+# Source of multiplot function: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+
+```{r}
+# Predict with four models
+pred_test_rf <- predict(model_rf, newdata = df_test)
+pred_test_glm <- predict(model_glm, newdata = df_test)
+pred_test_knn <- predict(model_knn, newdata = df_test)
+pred_test_pls <- predict(model_pls, newdata = df_test)
+
+# Check performance numerically
+results_test <- df_test %>%
+  select(price) %>%
+  unlist()
+
+# Use postResample function to calculate regression performane, then combine all in one data.frame and print
+as.data.frame(
+  rbind(
+    c("rf", postResample(pred = pred_test_rf, obs = results_test)),
+    c("glm", postResample(pred = pred_test_glm, obs = results_test)),
+    c("knn", postResample(pred = pred_test_knn, obs = results_test)),
+    c("pls", postResample(pred = pred_test_pls, obs = results_test))
+  )
+)
+
+# Add predictions to test data.frame
+df_test_results <- cbind(df_test,
+                         pred_test_glm,
+                         pred_test_knn,
+                         pred_test_pls,
+                         pred_test_rf)
+
+# Create scatter plots
+plot_test_glm <- ggplot(data = df_test_results, aes(x = pred_test_glm, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "gam") +
+  ggtitle("Test of GLM Predictions") +
+  annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
+    cor(
+      select(df_test_results, pred_test_glm),
+      select(df_test_results, price)
+      ),
+    2)
+    )
+  )
+
+plot_test_rf <- ggplot(data = df_test_results, aes(x = pred_test_rf, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "gam") +
+  ggtitle("Test of RF Predictions") +
+  annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
+    cor(
+      select(df_test_results, pred_test_rf),
+      select(df_test_results, price)
+      ),
+    2)
+    )
+  )
+
+plot_test_pls <- ggplot(data = df_test_results, aes(x = pred_test_pls, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "gam") +
+  ggtitle("Test of PLS Predictions") +
+  annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
+    cor(
+      select(df_test_results, pred_test_pls),
+      select(df_test_results, price)
+      ),
+    2)
+    )
+  )
+
+plot_test_knn <- ggplot(data = df_test_results, aes(x = pred_test_knn, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "gam") +
+  ggtitle("Test of KNN Predictions") +
+  annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
+    cor(
+      select(df_test_results, pred_test_knn),
+      select(df_test_results, price)
+      ),
+    2)
+    )
+  )
+
+# Plot using multiplot function
+multiplot(plot_test_glm, plot_test_knn, plot_test_pls, plot_test_rf, cols = 2)
+```
+
+The generalized linear model continues to have the lowest RMSE and best performance out-of-sample. We will use it as our predictor.
+
+```{r}
+# Cleanup environment
+rm(pred_test_rf, pred_test_knn, pred_test_pls, pred_test_glm,
+   plot_test_glm, plot_test_rf, plot_test_knn, plot_test_pls,
+   results_test, df_test, df_test_results,
+   model_pls, model_rf, model_knn, df_training)
+```
+
+Predict values and compare to JBB.
+
+```{r}
+# Predict
+pred_validation <- predict(model_glm, newdata = df_validation)
+
+# Results data.frame
+df_validation <- df_validation %>%
+  mutate(prediction = pred_validation) %>%
+  select(price, jbb, prediction)
+
+# Differences
+df_validation <- df_validation %>%
+  mutate(jbb_diff = abs(jbb - price)) %>%
+  mutate(prediction_diff = abs(prediction - price))
+
+# Final account
+df_validation %>%
+  select(jbb_diff) %>%
+  sum()
+
+df_validation %>%
+  select(prediction_diff) %>%
+  sum()
+
+# Cleanup environment
+rm(multiplot, pred_validation)
+rm(df_validation, model_glm)
+```
+
+Great success!
+
+## Switching Gears: Check for Normality of Data
+
+Just for kicks, let's try some normality tests to see if we can perform a T-Test to compare ship prices based on style. First, we'll view the two distributions as density plots:
+
+```{r}
+# Copy data.frame go Global.Env(), create an index, and make condition/color/style variables into factors
+df <- auction %>%
+  mutate(style = as.factor(style)) %>%
+  select(price, style) %>%
+  drop_na()
+
+# Visualize
+ggplot(data = df, aes(x = price, fill = style)) + 
+  geom_density(alpha = .3) + 
+  ggtitle("Price Distributions by Ship Style")
+```
+
+The distributions look normal, but is there a plot dedicated for this? Of course!
+
+```{r}
+# Get classic and modern prices as vectors
+price_classic <- df %>%
+  filter(style == "classic") %>%
+  select(price) %>%
+  unlist()
+
+price_modern <- df %>%
+  filter(style == "modern") %>%
+  select(price) %>%
+  unlist()
+
+# Formulas to calculate theoretical quantiles
+# Inspired from stats::qqline()
+# Is a numeric vector
+qq_abline_slope <- function(x) {
+  x <- x[!is.na(x)]
+  slope <- diff(quantile(x, c(0.25, 0.75))) / diff(qnorm(c(0.25, 0.75)))
+  return(slope)
+}
+
+qq_abline_intersect <- function(x, slope = NULL) {
+  # If slope is not provided, use qq_abline_slope() to calculate it
+    if (is.null(slope)) {
+    slope <- qq_abline_slope(x)
+  }
+  
+  x <- x[!is.na(x)]
+  intersect <- quantile(x, 0.25) - slope * qnorm(0.25)
+  return(intersect)
+}
+
+# Calculate theorecial quantiles
+slope_classic <- qq_abline_slope(price_classic)
+int_classic <- qq_abline_intersect(price_classic)
+
+slope_modern <- qq_abline_slope(price_modern)
+int_modern <- qq_abline_intersect(price_modern)
+
+# Plot
+ggplot(data = df, aes(sample = price, color = style)) + 
+  geom_qq() + 
+  ggtitle("Quantile-Quantile Plot by Ship Style") +
+  geom_abline(slope = slope_classic, intercept = int_classic) + 
+  geom_abline(slope = slope_modern, intercept = int_modern)
+
+# Cleanup Environment
+rm(classic_price, int_classic, int_modern,
+   slope_classic, slope_modern, x_classic, x_modern, y_classic, y_modern,
+   qq_abline_intersect, qq_abline_slope, df)
+```
+
+Okay, the data visually appears to be normally distributed - but can we check this with a hypothesis test? Of course!
+
+```{r}
+shapiro.test(price_classic)
+shapiro.test(price_modern)
+```
+
+Through all of these methods, we can determine it's safe to apply a t-test now.
+
+```{r}
+t.test(price_classic, price_modern)
+
+# Cleanup Environment
+rm(price_classic, price_modern)
+```
+
+Nice! We can prove that they have significantly different means.
 
 # Homework
 
