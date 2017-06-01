@@ -71,7 +71,7 @@ First, we'll assess the performance of Jack's Blue Book (JBB) as a predictor.
 ```{r}
 ggplot(data = df, aes(x = jbb, y = price)) + 
   geom_point() + 
-  geom_smooth(method = "gam") + 
+  geom_smooth(method = "lm") + 
   ggtitle("Jack's Blue Book Predictions vs. Actual Prices") +
   annotate("text", x = 2500, y = 4500, label = paste("Pearson's R = ", round(
     cor(
@@ -189,7 +189,7 @@ For in-sample performance, the generalized linear model has the lowest root mean
 # Residual plot
 ggplot(mapping = aes(x = 1:length(resid(model_glm)), y = resid(model_glm), geom = "point")) +
   geom_point() +
-  geom_smooth(method = "gam") + 
+  geom_smooth(method = "lm") + 
   ggtitle("Residual Plot for Generalized Linear Model")
 ```
 
@@ -277,7 +277,7 @@ df_test_results <- cbind(df_test,
 # Create scatter plots
 plot_test_glm <- ggplot(data = df_test_results, aes(x = pred_test_glm, y = price)) + 
   geom_point() + 
-  geom_smooth(method = "gam") +
+  geom_smooth(method = "lm") +
   ggtitle("Test of GLM Predictions") +
   annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
     cor(
@@ -290,7 +290,7 @@ plot_test_glm <- ggplot(data = df_test_results, aes(x = pred_test_glm, y = price
 
 plot_test_rf <- ggplot(data = df_test_results, aes(x = pred_test_rf, y = price)) + 
   geom_point() + 
-  geom_smooth(method = "gam") +
+  geom_smooth(method = "lm") +
   ggtitle("Test of RF Predictions") +
   annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
     cor(
@@ -303,7 +303,7 @@ plot_test_rf <- ggplot(data = df_test_results, aes(x = pred_test_rf, y = price))
 
 plot_test_pls <- ggplot(data = df_test_results, aes(x = pred_test_pls, y = price)) + 
   geom_point() + 
-  geom_smooth(method = "gam") +
+  geom_smooth(method = "lm") +
   ggtitle("Test of PLS Predictions") +
   annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
     cor(
@@ -316,7 +316,7 @@ plot_test_pls <- ggplot(data = df_test_results, aes(x = pred_test_pls, y = price
 
 plot_test_knn <- ggplot(data = df_test_results, aes(x = pred_test_knn, y = price)) + 
   geom_point() + 
-  geom_smooth(method = "gam") +
+  geom_smooth(method = "lm") +
   ggtitle("Test of KNN Predictions") +
   annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
     cor(
