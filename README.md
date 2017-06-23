@@ -1,5 +1,7 @@
 # leaRn
 Course material for intro to R training created by me
+To preview a HTML file without downloading it use: https://cdn.rawgit.com/peconeto/leaRn/398a7d31/class_#.html
+Note: Replace "#" by the class number
 
 # Class 1: Getting Started
 
