@@ -47,25 +47,31 @@ str(df)
 summary(df)
 
 # What do my columns mean?
-?pirates
+# ?pirates
 ```
 
 Subsetting rows and columns (selecting and filtering)
 
 ```{r}
 # Selecting columns and rows
-?select
+# ?select
 
 # Create an additional copy of the dataset so you don't have to constantly re-load it
 df2 <- df
-
 df2 <- select(df2, id, height, weight) # Select columns by name
+
+df2 <- df
 df2 <- select(df2, 1, 4, 5) # Select columns by index
 
-?filter
+# ?filter
 
+df2 <- df
 df2 <- filter(df2, sex == "male") # Equal to
+
+df2 <- df
 df2 <- filter(df2, sex != "female") # Not equal to
+
+df2 <- df
 df2 <- filter(df2, sword.time < 5) # Less than
 
 # The unique or table functions are useful to determine whether to use ==, or !=, or %in%
@@ -77,9 +83,11 @@ Combining select and filter
 
 ```{r}
 # Filter by > 1 col
+df2 <- df
 df2 <- filter(df2, sex == "male", sword.time < 5)
 
 # Nested functions
+df2 <- df
 df2 <- select(filter(df2, sex == "female", eyepatch == 1), id, age, headband)
 ```
 
@@ -87,11 +95,13 @@ Creating calculated columns
 
 ```{r}
 # Creating new columns
-?mutate
+# ?mutate
 
+df2 <- df
 df2 <- mutate(df2, height_in = height / 2.54)
 
 # Drop height column
+df2 <- df
 df2 <- select(df2, -height)
 ```
 
@@ -100,6 +110,7 @@ Pipes
 ```{r}
 # This works, but is resource intensive and annoying to read/write
 # This is also difficult to alter (for example if I wanted to alter df2 to df)
+df2 <- df
 df2 <- mutate(df2, height_in = height / 2.54)
 df2 <- filter(df2, sex == "female", eyepatch == 1)
 df2 <- select(df2, id, age, headband)
@@ -107,6 +118,7 @@ df2 <- mutate(df2, new_id = id * 10)
 df2 <- select(df2, -id)
 
 # This is impossible to read and troubleshoot
+df2 <- df
 df2 <- select(mutate(select(filter(mutate(df2,
                                           height_in = height / 2.54),
                                    sex == "female", eyepatch == 1), 
@@ -115,6 +127,7 @@ df2 <- select(mutate(select(filter(mutate(df2,
               -id)
 
 # That is why we use the %>% (piping) operator
+df2 <- df
 df2 <- df2 %>%
   mutate(height_in = height / 2.54) %>%
   filter(sex == "female", eyepatch == 1) %>%
@@ -126,7 +139,7 @@ df2 <- df2 %>%
 Loading data: We'll use CSV here as a very common file extension for data storage. JSON, XML, SQL, etc. can all be used with different R packages. RData is a good R-specific data storage extension for fast reading/writing, even in large files.
 
 ```{r}
-x <- read_csv("leaRn/student_data.csv")
+x <- read_csv("~/Documents/R_Working_Directory/student_data.csv")
 ```
 
 # Homework

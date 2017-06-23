@@ -35,7 +35,7 @@ library(nycflights13)
 Explore the data
 
 ```{r}
-?flights
+# ?flights
 df <- flights
 summary(df)
 str(df)
@@ -44,15 +44,17 @@ str(df)
 Q1: What was the fastest NYC flight in 2013?
 
 ```{r}
+df <- flights
 df %>%
   mutate(speed = distance/air_time) %>%
-  filter(speed == max(speed, na.rm = TRUE)) %>%
-  View()
+  filter(speed == max(speed, na.rm = TRUE))# %>%
+  #View()
 ```
 
 Q2: What airlines are most delayed on average?
 
 ```{r}
+df <- flights
 df %>%
   mutate(total_delay = dep_delay + arr_delay) %>%
   group_by(carrier) %>%
@@ -67,6 +69,7 @@ df %>%
 Q3: Create a chart that visually describes delays by airline
 
 ```{r}
+df <- flights
 carrier_dep_delay <- df %>%
   mutate(total_delay = dep_delay + arr_delay) %>%
   filter(!is.na(total_delay))
@@ -84,6 +87,7 @@ carrier_dep_delay %>%
 Q4: Do delays correlate with greater speed in-flight?
 
 ```{r}
+df <- flights
 df <- df %>%
   mutate(total_delay = dep_delay + arr_delay) %>%
   mutate(speed = distance/air_time)

@@ -73,13 +73,15 @@ Commenting
 
 Installing and loading packages
 
-```{r}
+```{r, eval=FALSE}
 # Install packages
 install.packages("tidyverse")
 install.packages("yarrr")
 install.packages("nycflights13")
 install.packages("swirl")
+```
 
+```{r}
 # Load packages
 library(nycflights13)
 library(tidyverse)
@@ -95,7 +97,7 @@ Creating some basic R objects, and referencing objects from the Global Environme
 
 x <- 1
 x
-y # Object "y" not found
+# y # Object "y" not found
 
 z <- c(1, 2, 3) # Vector of lenght 3
 
@@ -153,7 +155,7 @@ str(df_flights)
 summary(df_flights)
 head(df_flights)
 tail(df_flights)
-View(df_flights)
+# View(df_flights)
 
 # Basic subsetting
 mean(df_flights$air_time, na.rm = TRUE)
@@ -165,7 +167,7 @@ df_flights[1, 1]
 # All of row 1
 df_flights[1, ]
 df_flights[1, 1:ncol(df_flights)]
-View(df_flights[1, ])
+# View(df_flights[1, ])
 # All of columns 1
 df_flights[, 1]
 df_flights[1:nrow(df_flights), 1]
@@ -173,11 +175,14 @@ df_flights[1:nrow(df_flights), 1]
 
 How to start up Swirl for the homework assignment
 
-```{r}
+```{r,eval=FALSE}
 # How to open up swirl and do the homework assignment
 install.packages("swirl")
+```
+
+```{r}
 library(swirl)
-swirl() # Use the basics of programming in R course, lessons 1-4
+# swirl() # Use the basics of programming in R course, lessons 1-4
 ```
 
 # Homework
