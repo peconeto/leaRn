@@ -3,6 +3,12 @@ Course material for intro to R training created by me
 
 To preview a HTML file without downloading it, click the class title hyperlinks
 
+# My Favorite R Resources
+- Fischetti, T. (2015). Data Analysis with R.
+- [Johns Hopkins University / Coursera: Data Science Specialization] (https://www.coursera.org/specializations/jhu-data-science)
+- Wickham H. (2010). “A Layered Grammar of Graphics.” Journal of Computational and Graphical Statistics, 19(1), 3–28.
+- Wickham H. (2014). “Tidy Data.” Journal of Statistical Software, 59(10).
+
 # [Class 1: Getting Started](https://rawgit.com/peconeto/leaRn/master/HTML/class_1.html)
 
 Topics:
