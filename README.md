@@ -5,7 +5,7 @@ To preview a HTML file without downloading it use: https://rawgit.com/peconeto/l
 
 Note: Replace "#" by the class number
 
-# Class 1: Getting Started
+# [Class 1: Getting Started](https://rawgit.com/peconeto/leaRn/master/HTML/class_1.html)
 
 Topics:
 1. Introduction to the class
@@ -21,7 +21,7 @@ Topics:
 - Essential data exploration functions
 - Simple subsetting
 
-# Class 2: Loading and Manipulating Data
+# [Class 2: Loading and Manipulating Data](https://rawgit.com/peconeto/leaRn/master/HTML/class_2.html)
 1. Recap of class 1
 2. Functions
 3. Operators
