@@ -1,0 +1,52 @@
+# Recap of class 3
+
+- Recap of class 3 topics
+- Class 3 homework review
+
+# ggplot2
+
+The grammar of graphics. Uses a small number of common "verbs" and very standardized syntax to enable the programmer to describe any chart they can imagine.
+
+data + coordinates [mapping] + geometric shapes = plot
+
+# Canonical plots
+
+- One continuous variable: Histogram (density)
+- One discrete variable: Barplot
+- Two continuous variables: Scatterplot
+- One discrete and one continuous variables: Boxplot
+- Two discrete variables: Heat map
+- Time series: Line
+
+```{r}
+# Load libraries
+library(tidyverse)
+library(yarrr)
+library(lubridate)
+library(GGally)
+library(plotly)
+```
+
+```{r}
+# One variable = geom_histogram (discrete or cont binned), geom_density (continuous)
+ggplot(data = df, mapping = aes(x = Type1)) + geom_bar() # Discrete
+ggplot(data = df, mapping = aes(x = speed)) + geom_histogram() # Continuous
+ggplot(data = df, mapping = aes(x = speed)) + geom_density() # Continuous
+
+# Cont vs cont = geom_point, geom_smooth
+ggplot(data = df, mapping = aes(x = attack, y = defense)) + geom_point()
+ggplot(data = df, mapping = aes(x = attack, y = defense)) + geom_point() + geom_smooth(method = "lm", se = FALSE)
+
+# Discrete vs cont = geom_boxplot
+ggplot(data = df, mapping = aes(x = Type1, y = hp)) + geom_boxplot()
+
+# Time series = geom_line - Note: Someone correctly pointed out that this plot is in the incorrect order [not fixed]
+ggplot(data = df, mapping = aes(x = paste(year(date_caught), month(date_caught), sep = "-"), group = 1)) +
+  geom_line(stat = "count")
+```
+
+# Homework
+
+- Review the [data visualization cheat sheet](https://www.rstudio.com/resources/cheatsheets/)
+- Build visualizations for your data analysis
+- Read Tidy Data and A Layered Grammar of Graphics, both by Hadley Wickham

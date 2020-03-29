@@ -1,7 +1,7 @@
-# Recap of class 3
+# Recap of class 4
 
-- Recap of class 3 topics
-- Class 3 homework review
+- Recap of class 4 topics
+- Class 4 homework review
 
 At this point you should have enough knowledge to import, explore, visualize, and wrangle data in R! You should also have a good understanding of all the fundamentals you need to branch out and start learning how to do more specialized tasks on your own. Those are all the tough parts - from here on out, classes can focus on more practical applications of the tool.
 
@@ -112,7 +112,7 @@ ggplot(data = df, aes(x = speed, y = total_delay)) +
 Q5:Does weather significantly affect flight delay severity?
 
 ```{r}
-# TBD
+# Students figure this out
 ```
 
 # Homework
@@ -120,5 +120,4 @@ Q5:Does weather significantly affect flight delay severity?
 For this class, complete the following homework assignments:
 
 - Finish answering any open questions from this problem set; otherwise, ask more questions that could be answered with the nycflights13 dataset and practice answering them
-- Read Tidy Data and A Layered Grammar of Graphics, both by Hadley Wickham
 - Now that your data is imported and cleaned up, begin working on the script that will answer your research question; you should have everything you need to extract conclusions related to your project!

@@ -1,7 +1,7 @@
-# Recap of class 4
+# Recap of class 5
 
-- Recap of class 4 topics
-- Class 4 homework review
+- Recap of class 5 topics
+- Class 5 homework review
 
 # Analysis Reproducibility and Literate Programming Concepts
 
@@ -23,11 +23,7 @@ A good R Markdown document should:
 
 To know if you clearly documented your entire analysis and made it reproducible, ask yourself: How far back can a reader go until the analysis is no longer reproducible? The answer to this question should be all the way to extracting raw data from its repository.
 
-# Machine Learning Demo
-
-Note: Machine learning should be an entire class on its own. This demo is intended to show the power of R with a simulated real-world scenario while students are becoming comfortable with the language. This demo does not include enough information for a student to pick up on machine learning skills on its own. The demo is placed in this class because it's a shorter one.
-
-## Predict Ship Acution Prices
+## Analysis: Predict Ship Acution Prices
 
 Will use the following libraries:
 - **tidyverse** for data manipulation
@@ -48,7 +44,7 @@ library(GGally)
 set.seed(78345)
 ```
 
-Explore and clean data to be predicted: The yarrr::auction data.frame.
+Explore and clean data to be predicted: The `yarrr::auction` data.frame.
 
 ```{r}
 # Copy data.frame go Global.Env(), create an index, and make condition/color/style variables into factors
@@ -470,13 +466,4 @@ For this class, complete the following homework assignments:
 
 - Review the [R Markdown cheat sheet](https://www.rstudio.com/resources/cheatsheets/) and [R Markdown Reference Guide](https://www.rstudio.com/resources/cheatsheets/)
 - Put your capstone analysis in a R Markdown document that uses literate programming to explain the steps you took in your analysis, and your final conclusions
-- Practice your analysis skills by answering the following questions using nycflights13 datasets, and document your work using R Markdown:
-1) Which NYC airport has the most pronounced seasonal change in flights?
-2) What are daily peak times for NYC area airports?
-3) Do daily peaks shift over the course of the year or do they remain at the same times?
-4) What tail number had the most unique flights in the dataset?
-5) What aircraft manufacturer had the most unique flights in the dataset?
-6) What is the distibution of flights by aircraft manufacturer?
-7) How do aircraft manufacturer cruise speed claims compare to actual airspeeds in flight?
-8) Does the duration of cruise have an effect on the relationship above?
-9) Is there a relationship between aircraft manufacture date and airspeed?
+- Prepare a 5/10-minute presentation on it for the final class

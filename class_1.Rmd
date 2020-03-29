@@ -1,23 +1,23 @@
 # Intro
 
 - Welcome
-- Student/teacher introductions
+- Introductions
 
 # What this course is and isn't
 
 - Not a computer science course
 - Not a statistics course
 - Will not go in-depth enough into any specific area
-- Will not cover every important topic required to become a good R programmer
+- Will not cover every important topic required to become an expert
 
-- Goal of this course is to teach the student enough to understand the framework for using R, and so that the student can then do self-research into any areas of interest
-- In other words, the class should teach you how to learn R on your own
+- Goal of this course is to teach the student enough to understand how to program in R, and so that the student can then do self-research into any areas of interest
+- In other words, the class should teach you how to go deeper and learn R on your own
 
 # Get on Slack!
 
 Slack is used for communications, homework assignments, posting of class notes, and as a discussion board for both students and teachers.
 
-# Why learn R (even if you already know Excel)?
+# Why learn R, even if you already know Excel?
 
 R allows you to perform data analysis with great speed and flexibility. It can do more challenging things than Excel, SPSS, and other analysis software. R scripts allow for reproducibility and critical review of analyses you've created. Finally, skills learned by learning to program in R can be used in other contexts that require human-machine interaction.
 
@@ -28,7 +28,7 @@ Advantages of R over Excel:
 - Can build Shiny or Plotly applications for more advanced products (3D, density, interactive)
 - Scripting for automation - just need to update dataset
 - Extensibility (ex. instead of hard-coding columns 1, 2, and 3 create a loop)
-- Can work with datasets that have > 100 columns, > 10,000 rows
+- Can work with datasets that have > 100 columns, > 1,000,000 rows
 - Finally, to be respected as a data analyst (data scientist), statistical programming is required. R, Python, Julia, or equivalent all work well; similarly to how we’d scowl at “Excel database”, “Excel data analysis” is analogous to that
 
 Excel makes it easy to do simple tasks, but is very challenging for difficult tasks. In a lot of ways, R can be the complete opposite. Of course, the disadvantage of R is a steeper learning curve - especially getting started. Hopefully, this course can help.
