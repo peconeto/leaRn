@@ -3,291 +3,467 @@
 - Recap of class 5 topics
 - Class 5 homework review
 
-# Why create functions?
+# Analysis Reproducibility and Literate Programming Concepts
 
-Functions are the workhorses of the R programming language. They help speed up or automate workflows by simplying repetitive tasks. They are easier to use than typical R scripts that perform a task, because a well-defined function will have some documentation on what inputs it accepts, what output values the user can expect, and what it does exactly. They can also be called with simple, descriptive names and include error checking. Finally, functions can be nested (for example with mutate) to become more powerful than when they are used independently. The fact that they use arguments to contorl inputs means that a well-defined function can be more flexible than a R script since possible alternate uses for it are pre-built.
+The gold standard of analysis validation is *replication*. This is often not possible or practical due to time, cost, opportunity, ethical, data access, or other constraints. As such, we typicaly try to make analyses which can't be replicated *reproducible*, meaning another analyst or researcher can review and validate every step you took to come up with your conclusion. This is incredibly useful for documenting, sharing, and double-checking work.
 
-# Function example: spcCharts
+Literate programming is the concept of mixing a natural language (i.e. English) and a computer language (i.e. R) in order to explain analyses more easily. This is a great way to create reproducible data analyses, since you can have your entire code available with natural language instructions. The technique can also be used to create readable technical or non-technical documents that double up as reproducible data analyses. R Markdown is a R tool used to create documents with the concept of literate programming in mind.
 
-This function is used to automate an otherwise lengthy workflow that accepts a CSV input, mutates it extensively, calculates statistical process control charts with another function, and finally contructs a ggplot2 to chart.
+# R Markdown
+
+R Markdown is built-in with R Studio. It is similar to a R script, but you can specify where code chunks begin and end. You can also add images, hyperlinks, and other such objects to your document. A quick document with formatting guidelines can be found [here](http://rmarkdown.rstudio.com/authoring_basics.html).
+
+When creating your document, always keep in mind which code chunks should be executed, or even shown. One great feature of R Markdown is that the code needs to run in order to successfully print (knit), thus demanding a minimum level of quality.
+
+A good R Markdown document should:
+- Start with "raw data" - whatever this might mean in your context; importantly, it should not include data that was manipulated by hand without documentation
+- Try to do everything in code vs. point-and-click user interfaces; this forces you to document your work clearly because a computer can *only* do what you instruct it to
+- Use version control and commenting
+- Document your software and hardware environment, or default preferences, if being shared to a wide enough audience that this becomes relevant
+
+To know if you clearly documented your entire analysis and made it reproducible, ask yourself: How far back can a reader go until the analysis is no longer reproducible? The answer to this question should be all the way to extracting raw data from its repository.
+
+## Analysis: Predict Ship Acution Prices
+
+Will use the following libraries:
+- **tidyverse** for data manipulation
+- **caret** for machine learning
+- **yarrr** for datasets
+- **GGally** for a plot matrix
+
+Note: Help with the caret package can be found [here](http://topepo.github.io/caret/pre-processing.html).
 
 ```{r}
-# Function accepts a data file, start and end dates, and grouping
-# Returns SPC chart
-# Function expects certain standards on data file:
-## First column contains dates in the format "Mmm, YYYY"
-## Second column contains a count of events/issues/deficiencies
-## Third column contains the number of relevant operations
-## There should be no skipped months within dataset
-## Oldest date first (top), newest date last (bottom)
-# Data is collected at month end; mid-month date ranges will exclude the last month
+# Load required libraries
+library(tidyverse)
+library(yarrr)
+library(caret)
+library(GGally)
 
-spcChart <- function(filename = NA,
-                     title = NA,
-                     group = c("monthly", "quarterly"),
-                     enddate = floor_date(today(), "month") - 1, # Last day of previous month
-                     startdate = enddate - months(24) + 1) { # Go 24 months back
-
-  # Required packages without exposing messages
-  suppressMessages(require(lubridate))
-  suppressMessages(require(tidyverse))
-  suppressMessages(require(qcc))
-
-  # Read input files
-  df <- read.csv(filename, stringsAsFactors = FALSE)
-
-  # Check for legitimate arguments
-  if(!(is.data.frame(df)) | ncol(df) != 3) {
-    stop("Data file not recognized as a data.frame with three columns")
-  }
-  if(!(group[1] %in% c("monthly", "quarterly"))) {
-    stop("Grouping type not recognized")
-  }
-  if(!is.Date(startdate) | !(is.Date(enddate))) {
-    stop("Start and end dates not recognized")
-  }
-
-  # Clean up input data file
-  # Fix column names based on position
-  df <- df %>%
-    select(Date_Label_Month = 1,
-           Events = 2,
-           Operations = 3)
-
-  # Convert date labels into R Date format, necessary for grouping and filtering
-  dates_list <- df %>%
-    select(Date_Label_Month) %>%
-    unlist() %>%
-    strsplit(",")
-
-  months_vector <- dates_list %>%
-    sapply("[", 1) %>%
-    unname()
-
-  years_vector <- dates_list %>%
-    sapply("[", 2) %>%
-    unname() %>%
-    as.integer()
-
-  dates_vector <- paste(years_vector, months_vector, "15", sep = "-") %>%
-    as.Date(format = "%Y-%b-%d") %>%
-    ceiling_date("month") - 1
-
-  df <- df %>%
-    mutate(Date_Collected = dates_vector) %>%
-    mutate(Quarter_int = quarter(Date_Collected)) %>%
-    mutate(Year_int = year(Date_Collected)) %>%
-    mutate(Date_Label_Quarter = paste(paste("Q", Quarter_int, sep = ""),
-                                      Year_int, sep = ", ")) %>%
-    select(-Quarter_int, -Year_int)
-
-  # Apply filter
-  df <- df %>%
-    filter(Date_Collected >= startdate, Date_Collected <= enddate)
-
-  # Apply grouping
-  if(group[1] == "monthly") {
-    # Note that data is already grouped by month from input
-    # No additional grouping operation is required here
-    df_grouped <- df %>%
-      select(Date_Label = Date_Label_Month,
-             Events = Events,
-             Operations = Operations)
-  }
-  if(group[1] == "quarterly") {
-    df_grouped <- df %>%
-      group_by(Date_Label_Quarter) %>%
-      summarise(Events = sum(Events), Operations = sum(Operations)) %>%
-      ungroup() %>%
-      select(Date_Label = Date_Label_Quarter,
-             Events = Events,
-             Operations = Operations)
-
-    # Must re-order data.frame after grouping to preserve time series order
-    dates_list_ordering <- df_grouped %>%
-      select(Date_Label) %>%
-      unlist() %>%
-      strsplit(", ")
-
-    quarters_vector_ordering <- dates_list_ordering %>%
-      sapply("[", 1) %>%
-      unname()
-
-    years_vector_ordering <- dates_list_ordering %>%
-      sapply("[", 2) %>%
-      unname() %>%
-      as.integer()
-
-    df_grouped <- df_grouped %>%
-      mutate(Year_int = years_vector_ordering) %>%
-      mutate(Quarter_int = quarters_vector_ordering) %>%
-      arrange(Year_int, Quarter_int) %>%
-      select(-Year_int, -Quarter_int)
-  }
-
-  # Create quality control chart
-  # Collect variables for QCC calculation
-  observations <- df_grouped %>%
-    select(Events) %>%
-    unlist() %>%
-    unname()
-
-  labels <- df_grouped %>%
-    select(Date_Label) %>%
-    unlist() %>%
-    unname()
-
-  sizes <- df_grouped %>%
-    select(Operations) %>%
-    unlist() %>%
-    unname()
-
-  # Calculate QCC values
-  qcc_calc <- qcc(data = observations, type = "np", sizes = sizes, plot = FALSE)
-
-  qcc_df <- data.frame(labels = labels,
-                           center = qcc_calc$center,
-                           values = qcc_calc$statistics,
-                           LCL = qcc_calc$limits[,1],
-                           UCL = qcc_calc$limits[,2],
-                           beyond_limits = 0,
-                           stringsAsFactors = FALSE)
-
-  # Convert labels into factor so ggplot will know to order it non-alphabetically
-  qcc_df$labels <- factor(qcc_df$labels,
-                              levels = unique(qcc_df$labels))
-
-  # Update data.frame with rows where runs rules were exceeded
-  runs_index <- unname(unlist(qcc_calc$violations[2]))
-  qcc_df[runs_index, "beyond_limits"] <- 2
-
-  # Update data.frame with rows where limit was exceeded
-  beyond_limits_index <- unname(unlist(qcc_calc$violations[1]))
-  qcc_df[beyond_limits_index, "beyond_limits"] <- 1
-
-  # Create ggplot
-  plot <- ggplot(qcc_df) +
-    labs(title = title, x = "Dates", y = "Count") +
-    theme(axis.text = element_text(size = 8),
-          axis.title = element_text(size = 14),
-          title = element_text(size = 18)) +
-    geom_step(aes(x = labels, y = LCL), group = 1, linetype = 2, color = "red") +
-    geom_step(aes(x = labels, y = UCL), group = 1, linetype = 2, color = "red") +
-    geom_step(aes(x = labels, y = center), group = 1, linetype = 2, color = "blue") +
-    geom_line(aes(x = labels, y = values), group = 1) +
-    geom_point(aes(x = labels, y = values, color = factor(beyond_limits)), size = 4) +
-    scale_colour_manual(values = c("0" = "black", "1" = "red", "2" = "yellow"), guide = FALSE)
-
-  # Plot
-  return(plot)
-  }
+# Set seed for reproducibility
+set.seed(78345)
 ```
 
-The spcChart_all uses the spcChart function on all existing CSV files in working directory and saves them as PNG files.
+Explore and clean data to be predicted: The `yarrr::auction` data.frame.
 
 ```{r}
-# Uses spcChart function on all existing CSV files in working directory
-# Saves PNG files
+# Copy data.frame go Global.Env(), create an index, and make condition/color/style variables into factors
+df <- auction %>%
+  mutate(condition = as.factor(condition)) %>%
+  mutate(color = as.factor(color)) %>%
+  mutate(style = as.factor(style))
 
-spcChart_all <- function() {
-  
-  # Load required libraries
-  require(safetydata)
-  
-  # Get list of files that will be used for chart creation
-  files <- list.files(pattern = ".csv")
-  
-  for(i in 1:length(files)) {
-    title <- unlist(strsplit(files[i], ".csv"))
-    
-    # Generate chart
-    spc_Plot <- spcChart(filename = files[i],
-                         title = title)
-    
-    # Save image file
-    ggsave(filename = paste(title, "png", sep = "."),
-           plot = spc_Plot,
-           device = "png",
-           path = getwd(),
-           height = 7,
-           width = 14,
-           units = "in")
+# Explore data and visualize
+str(df)
+
+summary(df)
+
+df %>%
+  ggpairs()
+```
+
+First, we'll assess the performance of Jack's Blue Book (JBB) as a predictor.
+
+```{r}
+ggplot(data = df, aes(x = jbb, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") + 
+  ggtitle("Jack's Blue Book Predictions vs. Actual Prices") +
+  annotate("text", x = 2500, y = 4500, label = paste("Pearson's R = ", round(
+    cor(
+      select(df, jbb),
+      select(df, price)
+      ),
+    2)
+    )
+  )
+```
+
+Seems like it is a good predictor, with correlation to actual prices of approximately 0.87. We'll aim on creating a model which competes with this predictor. First, we'll create a validation dataset so that we can compare final performanceagainst JBB.
+
+```{r}
+# Create test and training partitions
+index_test <- df %>%
+  select(price) %>%
+  unlist() %>%
+  createDataPartition(p = .35, list = FALSE)
+
+df_test <- df %>%
+  slice(index_test)
+
+df_training <- df %>%
+  slice(-index_test)
+
+# Create validation partition from test
+index_validation <- df_test %>%
+  select(price) %>%
+  unlist() %>%
+  createDataPartition(p = .05, list = FALSE)
+
+df_validation <- df_test %>%
+  slice(index_validation)
+
+df_test <- df_test %>%
+  slice(-index_validation)
+
+# Cleanup environment
+rm(df, index_test, index_validation)
+```
+
+Check for columns in the training set that should not be used.
+
+```{r}
+# Check for near zero variance variables
+df_training %>%
+  select(-jbb) %>%
+  nzv() # None
+
+# Check for highly correlated variables
+corr_matrix <- df_training %>%
+  select(-color, -style, -condition, -jbb) %>%
+  cor()
+
+findCorrelation(corr_matrix) # None
+
+# Check for linear dependencies
+df_training %>%
+  select(-style, -color, -condition, -jbb) %>%
+  findLinearCombos() # None
+
+# Remove jbb variable from training data prior to training models
+df_training <- df_training %>%
+  select(-jbb)
+
+# Clean environment
+rm(corr_matrix)
+```
+
+Train models. We will use 10 k-fold cross validation to estimate in-sample performance and pre-process the data during training so that it is centered and scaled.
+
+```{r}
+# Train models: Random forest
+model_rf <- train(price ~ .,
+                  data = df_training,
+                  method = "rf",
+                  trControl = trainControl(method = "cv", number = 10),
+                  preProc = c("center", "scale"))
+
+# Train models: Generalized linear model
+model_glm <- train(price ~ .,
+                  data = df_training,
+                  method = "glm",
+                  trControl = trainControl(method = "cv", number = 10),
+                  preProc = c("center", "scale"))
+
+# Train models: K nearest neighbors
+model_knn <- train(price ~ .,
+                  data = df_training,
+                  method = "knn",
+                  trControl = trainControl(method = "cv", number = 10),
+                  preProc = c("center", "scale"))
+
+# Train models: Partial least squares
+model_pls <- train(price ~ .,
+                  data = df_training,
+                  method = "pls",
+                  trControl = trainControl(method = "cv", number = 10),
+                  preProc = c("center", "scale"))
+```
+
+Now we review our models and evaluate in-sample performance.
+
+```{r}
+model_rf
+model_glm
+model_knn
+model_pls
+```
+
+For in-sample performance, the generalized linear model has the lowest root mean sauqred error (RMSE). This means it is the best predicting model based on in-sample performance. We can also, plot residuals for this model to check if there is any pattern left to be discovered.
+
+```{r}
+# Residual plot
+ggplot(mapping = aes(x = 1:length(resid(model_glm)), y = resid(model_glm), geom = "point")) +
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  ggtitle("Residual Plot for Generalized Linear Model")
+```
+
+We can now evaluate out-of-sapmle performance to see if the random forest model continues to be superior. The first code chunk below simply creates a function which is later used to display ggplots in panes.
+
+```{r}
+# Source of multiplot function: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
   }
 }
 ```
 
-# Practical exercises
-
-Basic function components
-- Arguments: order & defaults are important
-- Input error checking
-- Return a value at the end
-
-The example below is a simple function template
-
 ```{r}
-fun <- function(arg1, arg2 = "default") {
-	# function goes here
-	# loops
-	if(exists(value)) {
-		# blah blah blah
-	  # this can be used for error checking and stopping
-	stop("Error!")}
-	return()
-}
+# Predict with four models
+pred_test_rf <- predict(model_rf, newdata = df_test)
+pred_test_glm <- predict(model_glm, newdata = df_test)
+pred_test_knn <- predict(model_knn, newdata = df_test)
+pred_test_pls <- predict(model_pls, newdata = df_test)
+
+# Check performance numerically
+results_test <- df_test %>%
+  select(price) %>%
+  unlist()
+
+# Use postResample function to calculate regression performane, then combine all in one data.frame and print
+as.data.frame(
+  rbind(
+    c("rf", postResample(pred = pred_test_rf, obs = results_test)),
+    c("glm", postResample(pred = pred_test_glm, obs = results_test)),
+    c("knn", postResample(pred = pred_test_knn, obs = results_test)),
+    c("pls", postResample(pred = pred_test_pls, obs = results_test))
+  )
+)
+
+# Add predictions to test data.frame
+df_test_results <- cbind(df_test,
+                         pred_test_glm,
+                         pred_test_knn,
+                         pred_test_pls,
+                         pred_test_rf)
+
+# Create scatter plots
+plot_test_glm <- ggplot(data = df_test_results, aes(x = pred_test_glm, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  ggtitle("Test of GLM Predictions") +
+  annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
+    cor(
+      select(df_test_results, pred_test_glm),
+      select(df_test_results, price)
+      ),
+    2)
+    )
+  )
+
+plot_test_rf <- ggplot(data = df_test_results, aes(x = pred_test_rf, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  ggtitle("Test of RF Predictions") +
+  annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
+    cor(
+      select(df_test_results, pred_test_rf),
+      select(df_test_results, price)
+      ),
+    2)
+    )
+  )
+
+plot_test_pls <- ggplot(data = df_test_results, aes(x = pred_test_pls, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  ggtitle("Test of PLS Predictions") +
+  annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
+    cor(
+      select(df_test_results, pred_test_pls),
+      select(df_test_results, price)
+      ),
+    2)
+    )
+  )
+
+plot_test_knn <- ggplot(data = df_test_results, aes(x = pred_test_knn, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  ggtitle("Test of KNN Predictions") +
+  annotate("text", x = 2500, y = 4000, label = paste("Pearson's R = ", round(
+    cor(
+      select(df_test_results, pred_test_knn),
+      select(df_test_results, price)
+      ),
+    2)
+    )
+  )
+
+# Plot using multiplot function
+multiplot(plot_test_glm, plot_test_knn, plot_test_pls, plot_test_rf, cols = 2)
 ```
 
-The example below is a simple function that includes error checking
+The generalized linear model continues to have the lowest RMSE and best performance out-of-sample. We will use it as our predictor.
 
 ```{r}
-# The purpose of the addTwo function is to add two numbers
-addTwo <- function(x, y) {
-  # Check for correct data types and lenghts
-  if(!is.numeric(x) | !is.numeric(y)) {
-    stop("Both x and y must be numeric vectors.")
-  }
-  if(length(x) != 1 | length(y) != 1) {
-    stop("Both x and y must be length 1 vectors.")
-  }
-  
-  # Calculate added value
-  z <- x + y
-  
-  # Return added value
-  return(z)
-}
+# Cleanup environment
+rm(pred_test_rf, pred_test_knn, pred_test_pls, pred_test_glm,
+   plot_test_glm, plot_test_rf, plot_test_knn, plot_test_pls,
+   results_test, df_test, df_test_results,
+   model_pls, model_rf, model_knn, df_training)
 ```
 
-The example below is a simple function that includes error checking and looping
+Predict values and compare to JBB.
 
 ```{r}
-# The purpose of the nameAndPaste function is to grab all files in your
-# Working directory with a given extension, and return all names
-# Pasted together as one line
-nameAndPaste <- function(extension = ".csv") {
-  # Error checking
-  if(!is.character(extension)) {
-    stop("Extension must be expressed as a character")
-  }
-  
-  # Get all file names
-  files <- list.files(pattern = extension)
-  
-  # Create a blank pasted_file_names object
-  pasted_file_names <- NULL
-  
-  # Loop through file names pasting them
-  for(i in 1:length(files)) {
-    current_file_name <- unlist(strsplit(files[i], extension))
-    pasted_file_names <- paste(pasted_file_names, current_file_name, sep = "/")
-  }
-  
-  # Returns a vector of file names
-  return(pasted_file_names)
-}
+# Predict
+pred_validation <- predict(model_glm, newdata = df_validation)
+
+# Results data.frame
+df_validation <- df_validation %>%
+  mutate(prediction = pred_validation) %>%
+  select(price, jbb, prediction)
+
+# Differences
+df_validation <- df_validation %>%
+  mutate(jbb_diff = abs(jbb - price)) %>%
+  mutate(prediction_diff = abs(prediction - price))
+
+# Final account
+df_validation %>%
+  select(jbb_diff) %>%
+  drop_na() %>%
+  sum() # Could also use mean()
+
+df_validation %>%
+  select(prediction_diff) %>%
+  drop_na() %>%
+  sum() # Could also use mean()
+
+# Cleanup environment
+rm(multiplot, pred_validation)
+rm(df_validation, model_glm)
 ```
+
+Great success!
+
+## Switching Gears: Check for Normality of Data
+
+Just for kicks, let's try some normality tests to see if we can perform a T-Test to compare ship prices based on style. First, we'll view the two distributions as density plots:
+
+```{r}
+# Copy data.frame go Global.Env(), create an index, and make condition/color/style variables into factors
+df <- auction %>%
+  mutate(style = as.factor(style)) %>%
+  select(price, style) %>%
+  drop_na()
+
+# Visualize
+ggplot(data = df, aes(x = price, fill = style)) + 
+  geom_density(alpha = .3) + 
+  ggtitle("Price Distributions by Ship Style")
+```
+
+The distributions look normal, but is there a plot dedicated for this? Of course!
+
+```{r}
+# Get classic and modern prices as vectors
+price_classic <- df %>%
+  filter(style == "classic") %>%
+  select(price) %>%
+  unlist()
+
+price_modern <- df %>%
+  filter(style == "modern") %>%
+  select(price) %>%
+  unlist()
+
+# Formulas to calculate theoretical quantiles
+# Inspired from stats::qqline()
+# Is a numeric vector
+qq_abline_slope <- function(x) {
+  x <- x[!is.na(x)]
+  slope <- diff(quantile(x, c(0.25, 0.75))) / diff(qnorm(c(0.25, 0.75)))
+  return(slope)
+}
+
+qq_abline_intersect <- function(x, slope = NULL) {
+  # If slope is not provided, use qq_abline_slope() to calculate it
+    if (is.null(slope)) {
+    slope <- qq_abline_slope(x)
+  }
+  
+  x <- x[!is.na(x)]
+  intersect <- quantile(x, 0.25) - slope * qnorm(0.25)
+  return(intersect)
+}
+
+# Calculate theorecial quantiles
+slope_classic <- qq_abline_slope(price_classic)
+int_classic <- qq_abline_intersect(price_classic)
+
+slope_modern <- qq_abline_slope(price_modern)
+int_modern <- qq_abline_intersect(price_modern)
+
+# Plot
+ggplot(data = df, aes(sample = price, color = style)) + 
+  geom_qq() + 
+  ggtitle("Quantile-Quantile Plot by Ship Style") +
+  geom_abline(slope = slope_classic, intercept = int_classic) + 
+  geom_abline(slope = slope_modern, intercept = int_modern)
+
+# Cleanup Environment
+rm(classic_price, int_classic, int_modern,
+   slope_classic, slope_modern, x_classic, x_modern, y_classic, y_modern,
+   qq_abline_intersect, qq_abline_slope, df)
+```
+
+Okay, the data visually appears to be normally distributed - but can we check this with a hypothesis test? Of course!
+
+```{r}
+shapiro.test(price_classic)
+shapiro.test(price_modern)
+```
+
+Through all of these methods, we can determine it's safe to apply a t-test now.
+
+```{r}
+t.test(price_classic, price_modern)
+
+# Cleanup Environment
+rm(price_classic, price_modern)
+```
+
+Nice! We can prove that they have significantly different means.
 
 # Homework
 
-- Create a function that automates a repetitive part of your workflow, for example takes an input and builds a graph that you've had to build by hand in the past
-- Complete and email me your capstone analysis; prepare a 5/10-minute presentation on it for the final class
+For this class, complete the following homework assignments:
+
+- Review the [R Markdown cheat sheet](https://www.rstudio.com/resources/cheatsheets/) and [R Markdown Reference Guide](https://www.rstudio.com/resources/cheatsheets/)
+- Put your capstone analysis in a R Markdown document that uses literate programming to explain the steps you took in your analysis, and your final conclusions
+- Prepare a 5/10-minute presentation on it for the final class

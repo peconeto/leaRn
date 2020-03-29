@@ -127,6 +127,7 @@ df2 <- select(mutate(select(filter(mutate(df2,
               -id)
 
 # That is why we use the %>% (piping) operator
+# fun(x, y) == x %>% fun(y)
 df2 <- df
 df2 <- df2 %>%
   mutate(height_in = height / 2.54) %>%

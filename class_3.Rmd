@@ -17,17 +17,14 @@ Common functions:
 - str (or use RStudio GUI)
 - summary
 - head / View
-- unique / table
+- distinct
 
-Quick visualization:
-- qplot
+Visualization:
 - ggplot
 
 # ggplot2
 
 The grammar of graphics. Uses a small number of common "verbs" and very standardized syntax to enable the programmer to describe any chart they can imagine.
-
-Note: I will not cover all details of ggplot2 because they are so specific to the graph you are trying to build. There is ample online documentation [here](http://ggplot2.tidyverse.org/reference/).
 
 Common geometric shapes:
 - geom_histogram
@@ -68,7 +65,7 @@ df %>%
   filter(sex != "male") %>%
   filter(sex != "other") %>%
   select(sex) %>%
-  unique()
+  distinct()
 ```
 
 Must understand creation of logical vectors to clean data more effectively; often times we know what "real" data looks like and want to replace all "bad" values
@@ -97,14 +94,14 @@ df2 <- df2 %>%
   filter(complete.cases(df2))
 ``` 
 
-The caret::nzv function can be used to check for near-zero-variance variables
+The `caret::nzv` function can be used to check for near-zero-variance variables
 
 ```{r}
 library(caret)
 nzv(df2)
 ```
 
-ggpairs in the GGally library can be used to create a plot matrix and visualize many vairables and their relationships
+The `GGally:ggpairs` function can be used to create a plot matrix and visualize many vairables and their relationships
 
 ```{r}
 # install.packages("GGally")
@@ -118,5 +115,5 @@ For this class, complete the following homework assignments:
 
 - Review the [data visualization cheat sheet](https://www.rstudio.com/resources/cheatsheets/)
 - Complete the Swirl R Programming Basic Building Blocks lessons
-- Finish cleaning the yarrr::pirateserrors dataset; consider what analytical decisions must be made and why; recognize that any such choice has associated pros and cons which impact final conclusions of the analysis
+- Finish cleaning the `yarrr::pirateserrors` dataset; consider what analytical decisions must be made and why; recognize that any such choice has associated pros and cons which impact final conclusions of the analysis
 - Practice cleaning and visualizing data from your selected data analysis and getting it tidy for analysis

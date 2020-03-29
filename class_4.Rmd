@@ -3,122 +3,291 @@
 - Recap of class 3 topics
 - Class 3 homework review
 
-At this point you should have enough knowledge to import, explore, visualize, and wrangle data in R! You should also have a good understanding of all the fundamentals you need to branch out and start learning how to do more specialized tasks on your own. Those are all the tough parts - from here on out, classes can focus on more practical applications of the tool.
+# Why create functions?
 
-# Data Analysis Fundamentals
+Functions are the workhorses of the R programming language. They help speed up or automate workflows by simplying repetitive tasks. They are easier to use than typical R scripts that perform a task, because a well-defined function will have some documentation on what inputs it accepts, what output values the user can expect, and what it does exactly. They can also be called with simple, descriptive names and include error checking. Finally, functions can be nested (for example with mutate) to become more powerful than when they are used independently. The fact that they use arguments to contorl inputs means that a well-defined function can be more flexible than a R script since possible alternate uses for it are pre-built.
 
-- The most important part in answering a question is: Clearly defining the question!
-- Data comes second - identify and collect it
-- Data cleaning is commonly overlooked but absolutely critical for valid conclusions
-- Once you have a question and a relevant, clean dataset then run your analysis by creating models, testing hypotheses, building visualizations, etc.
-- If you come up with predictions, attempt to validate them
-- Finally, create your output and document your work - make it as reproducible as possible/practical
+# Function example: spcCharts
+
+This function is used to automate an otherwise lengthy workflow that accepts a CSV input, mutates it extensively, calculates statistical process control charts with another function, and finally contructs a ggplot2 to chart.
+
+```{r}
+# Function accepts a data file, start and end dates, and grouping
+# Returns SPC chart
+# Function expects certain standards on data file:
+## First column contains dates in the format "Mmm, YYYY"
+## Second column contains a count of events/issues/deficiencies
+## Third column contains the number of relevant operations
+## There should be no skipped months within dataset
+## Oldest date first (top), newest date last (bottom)
+# Data is collected at month end; mid-month date ranges will exclude the last month
+
+spcChart <- function(filename = NA,
+                     title = NA,
+                     group = c("monthly", "quarterly"),
+                     enddate = floor_date(today(), "month") - 1, # Last day of previous month
+                     startdate = enddate - months(24) + 1) { # Go 24 months back
+
+  # Required packages without exposing messages
+  suppressMessages(require(lubridate))
+  suppressMessages(require(tidyverse))
+  suppressMessages(require(qcc))
+
+  # Read input files
+  df <- read.csv(filename, stringsAsFactors = FALSE)
+
+  # Check for legitimate arguments
+  if(!(is.data.frame(df)) | ncol(df) != 3) {
+    stop("Data file not recognized as a data.frame with three columns")
+  }
+  if(!(group[1] %in% c("monthly", "quarterly"))) {
+    stop("Grouping type not recognized")
+  }
+  if(!is.Date(startdate) | !(is.Date(enddate))) {
+    stop("Start and end dates not recognized")
+  }
+
+  # Clean up input data file
+  # Fix column names based on position
+  df <- df %>%
+    select(Date_Label_Month = 1,
+           Events = 2,
+           Operations = 3)
+
+  # Convert date labels into R Date format, necessary for grouping and filtering
+  dates_list <- df %>%
+    select(Date_Label_Month) %>%
+    unlist() %>%
+    strsplit(",")
+
+  months_vector <- dates_list %>%
+    sapply("[", 1) %>%
+    unname()
+
+  years_vector <- dates_list %>%
+    sapply("[", 2) %>%
+    unname() %>%
+    as.integer()
+
+  dates_vector <- paste(years_vector, months_vector, "15", sep = "-") %>%
+    as.Date(format = "%Y-%b-%d") %>%
+    ceiling_date("month") - 1
+
+  df <- df %>%
+    mutate(Date_Collected = dates_vector) %>%
+    mutate(Quarter_int = quarter(Date_Collected)) %>%
+    mutate(Year_int = year(Date_Collected)) %>%
+    mutate(Date_Label_Quarter = paste(paste("Q", Quarter_int, sep = ""),
+                                      Year_int, sep = ", ")) %>%
+    select(-Quarter_int, -Year_int)
+
+  # Apply filter
+  df <- df %>%
+    filter(Date_Collected >= startdate, Date_Collected <= enddate)
+
+  # Apply grouping
+  if(group[1] == "monthly") {
+    # Note that data is already grouped by month from input
+    # No additional grouping operation is required here
+    df_grouped <- df %>%
+      select(Date_Label = Date_Label_Month,
+             Events = Events,
+             Operations = Operations)
+  }
+  if(group[1] == "quarterly") {
+    df_grouped <- df %>%
+      group_by(Date_Label_Quarter) %>%
+      summarise(Events = sum(Events), Operations = sum(Operations)) %>%
+      ungroup() %>%
+      select(Date_Label = Date_Label_Quarter,
+             Events = Events,
+             Operations = Operations)
+
+    # Must re-order data.frame after grouping to preserve time series order
+    dates_list_ordering <- df_grouped %>%
+      select(Date_Label) %>%
+      unlist() %>%
+      strsplit(", ")
+
+    quarters_vector_ordering <- dates_list_ordering %>%
+      sapply("[", 1) %>%
+      unname()
+
+    years_vector_ordering <- dates_list_ordering %>%
+      sapply("[", 2) %>%
+      unname() %>%
+      as.integer()
+
+    df_grouped <- df_grouped %>%
+      mutate(Year_int = years_vector_ordering) %>%
+      mutate(Quarter_int = quarters_vector_ordering) %>%
+      arrange(Year_int, Quarter_int) %>%
+      select(-Year_int, -Quarter_int)
+  }
+
+  # Create quality control chart
+  # Collect variables for QCC calculation
+  observations <- df_grouped %>%
+    select(Events) %>%
+    unlist() %>%
+    unname()
+
+  labels <- df_grouped %>%
+    select(Date_Label) %>%
+    unlist() %>%
+    unname()
+
+  sizes <- df_grouped %>%
+    select(Operations) %>%
+    unlist() %>%
+    unname()
+
+  # Calculate QCC values
+  qcc_calc <- qcc(data = observations, type = "np", sizes = sizes, plot = FALSE)
+
+  qcc_df <- data.frame(labels = labels,
+                           center = qcc_calc$center,
+                           values = qcc_calc$statistics,
+                           LCL = qcc_calc$limits[,1],
+                           UCL = qcc_calc$limits[,2],
+                           beyond_limits = 0,
+                           stringsAsFactors = FALSE)
+
+  # Convert labels into factor so ggplot will know to order it non-alphabetically
+  qcc_df$labels <- factor(qcc_df$labels,
+                              levels = unique(qcc_df$labels))
+
+  # Update data.frame with rows where runs rules were exceeded
+  runs_index <- unname(unlist(qcc_calc$violations[2]))
+  qcc_df[runs_index, "beyond_limits"] <- 2
+
+  # Update data.frame with rows where limit was exceeded
+  beyond_limits_index <- unname(unlist(qcc_calc$violations[1]))
+  qcc_df[beyond_limits_index, "beyond_limits"] <- 1
+
+  # Create ggplot
+  plot <- ggplot(qcc_df) +
+    labs(title = title, x = "Dates", y = "Count") +
+    theme(axis.text = element_text(size = 8),
+          axis.title = element_text(size = 14),
+          title = element_text(size = 18)) +
+    geom_step(aes(x = labels, y = LCL), group = 1, linetype = 2, color = "red") +
+    geom_step(aes(x = labels, y = UCL), group = 1, linetype = 2, color = "red") +
+    geom_step(aes(x = labels, y = center), group = 1, linetype = 2, color = "blue") +
+    geom_line(aes(x = labels, y = values), group = 1) +
+    geom_point(aes(x = labels, y = values, color = factor(beyond_limits)), size = 4) +
+    scale_colour_manual(values = c("0" = "black", "1" = "red", "2" = "yellow"), guide = FALSE)
+
+  # Plot
+  return(plot)
+  }
+```
+
+The spcChart_all uses the spcChart function on all existing CSV files in working directory and saves them as PNG files.
+
+```{r}
+# Uses spcChart function on all existing CSV files in working directory
+# Saves PNG files
+
+spcChart_all <- function() {
+  
+  # Load required libraries
+  require(safetydata)
+  
+  # Get list of files that will be used for chart creation
+  files <- list.files(pattern = ".csv")
+  
+  for(i in 1:length(files)) {
+    title <- unlist(strsplit(files[i], ".csv"))
+    
+    # Generate chart
+    spc_Plot <- spcChart(filename = files[i],
+                         title = title)
+    
+    # Save image file
+    ggsave(filename = paste(title, "png", sep = "."),
+           plot = spc_Plot,
+           device = "png",
+           path = getwd(),
+           height = 7,
+           width = 14,
+           units = "in")
+  }
+}
+```
 
 # Practical exercises
 
-Note: From now on, it's assumed you understand how to install packages if you do not already have them installed. Also you should be able to find and review relevant documentation.
+Basic function components
+- Arguments: order & defaults are important
+- Input error checking
+- Return a value at the end
 
-In this practice exercise, will answer the questions or complete tasks posed below using datasets from the nycflights13 library:
-Q1: What was the fastest NYC flight in 2013?
-Q2: What airlines are most delayed on average?
-Q3: Create a chart that visually describes delays by airline
-Q4: Do delays correlate with greater speed in-flight?
-Q5: Does weather significantly affect flight delay severity?
-
-Load required packages
+The example below is a simple function template
 
 ```{r}
-library(tidyverse)
-library(nycflights13)
+fun <- function(arg1, arg2 = "default") {
+	# function goes here
+	# loops
+	if(exists(value)) {
+		# blah blah blah
+	  # this can be used for error checking and stopping
+	stop("Error!")}
+	return()
+}
 ```
 
-Explore the data
+The example below is a simple function that includes error checking
 
 ```{r}
-# ?flights
-df <- flights
-summary(df)
-str(df)
+# The purpose of the addTwo function is to add two numbers
+addTwo <- function(x, y) {
+  # Check for correct data types and lenghts
+  if(!is.numeric(x) | !is.numeric(y)) {
+    stop("Both x and y must be numeric vectors.")
+  }
+  if(length(x) != 1 | length(y) != 1) {
+    stop("Both x and y must be length 1 vectors.")
+  }
+  
+  # Calculate added value
+  z <- x + y
+  
+  # Return added value
+  return(z)
+}
 ```
 
-Q1: What was the fastest NYC flight in 2013?
+The example below is a simple function that includes error checking and looping
 
 ```{r}
-df <- flights
-df %>%
-  mutate(speed = distance/air_time) %>%
-  filter(speed == max(speed, na.rm = TRUE))# %>%
-  #View()
-```
-
-Q2: What airlines are most delayed on average?
-
-```{r}
-df <- flights
-df %>%
-  mutate(total_delay = dep_delay + arr_delay) %>%
-  group_by(carrier) %>%
-  summarise(Average_Delay = mean(total_delay, na.rm = TRUE)) %>%
-  left_join(airlines) %>%
-  select(Airline = name,
-         Airline_Code = carrier,
-         Average_Delay) %>%
-  arrange(desc(Average_Delay))
-```
-
-Q3: Create a chart that visually describes delays by airline
-
-```{r}
-df <- flights
-carrier_dep_delay <- df %>%
-  mutate(total_delay = dep_delay + arr_delay) %>%
-  filter(!is.na(total_delay))
-
-ggplot(data = carrier_dep_delay, aes(x = total_delay, fill = carrier)) + 
-  geom_density(alpha = .3)
-
-# For easier viewing, remove all departures >=100min
-carrier_dep_delay %>%
-  filter(total_delay < 100) %>%
-  ggplot(data = ., aes(x = total_delay, fill = carrier)) + 
-    geom_density(alpha = .3)
-```
-
-Q4: Do delays correlate with greater speed in-flight?
-
-```{r}
-df <- flights
-df <- df %>%
-  mutate(total_delay = dep_delay + arr_delay) %>%
-  mutate(speed = distance/air_time)
-
-cor_x <- df %>%
-  filter(!is.na(total_delay)) %>%
-  select(total_delay)
-
-cor_y <- df %>%
-  filter(!is.na(speed)) %>%
-  select(speed)
-
-# Do a correlation for the two variables
-cor(cor_x, cor_y)
-
-# Create a visualization
-ggplot(data = df, aes(x = speed, y = total_delay)) +
-  geom_point() +
-  geom_smooth()
-```
-
-Q5:Does weather significantly affect flight delay severity?
-
-```{r}
-# TBD
+# The purpose of the nameAndPaste function is to grab all files in your
+# Working directory with a given extension, and return all names
+# Pasted together as one line
+nameAndPaste <- function(extension = ".csv") {
+  # Error checking
+  if(!is.character(extension)) {
+    stop("Extension must be expressed as a character")
+  }
+  
+  # Get all file names
+  files <- list.files(pattern = extension)
+  
+  # Create a blank pasted_file_names object
+  pasted_file_names <- NULL
+  
+  # Loop through file names pasting them
+  for(i in 1:length(files)) {
+    current_file_name <- unlist(strsplit(files[i], extension))
+    pasted_file_names <- paste(pasted_file_names, current_file_name, sep = "/")
+  }
+  
+  # Returns a vector of file names
+  return(pasted_file_names)
+}
 ```
 
 # Homework
 
-For this class, complete the following homework assignments:
-
-- Finish answering any open questions from this problem set; otherwise, ask more questions that could be answered with the nycflights13 dataset and practice answering them
+- Build visualizations for your data analysis
 - Read Tidy Data and A Layered Grammar of Graphics, both by Hadley Wickham
-- Now that your data is imported and cleaned up, begin working on the script that will answer your research question; you should have everything you need to extract conclusions related to your project!
