@@ -113,7 +113,6 @@ ggpairs(yarrr::pirates)
 
 For this class, complete the following homework assignments:
 
-- Review the [data visualization cheat sheet](https://www.rstudio.com/resources/cheatsheets/)
 - Complete the Swirl R Programming Basic Building Blocks lessons
 - Finish cleaning the `yarrr::pirateserrors` dataset; consider what analytical decisions must be made and why; recognize that any such choice has associated pros and cons which impact final conclusions of the analysis
 - Practice cleaning and visualizing data from your selected data analysis and getting it tidy for analysis

@@ -37,15 +37,16 @@ Topics:
 1. Recap of class 2
 2. NA values
 3. Why explore, visualize, and clean data
-4. ggplot2
 
 # Class 4: ggplot2
+1. The grammar of graphics
+2. Canonical plots
 
 # Class 5: Practice Data Analysis
 1. Recap of class 3
 2. Data analysis fundamentals
 
 # Class 6: Literate Programming and Another Practice Data Analysis
-1. Analysis Reproducibility and Literate Programming Concepts
+1. Analysis reproducibility and literate programming concepts
 2. R Markdown
-3. Machine Learning Demo
+3. Data analysis
